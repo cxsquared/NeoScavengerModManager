@@ -1,0 +1,12 @@
+{
+
+	"com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle": {
+		"largeWhite":	{ "font": pixelFont_64, "fontColor": white },
+		"largeBlack":	{ "font": pixelFont_64, "fontColor": black },
+		"white":    	{ "font": pixelFont_32, "fontColor": white },
+		"smallWhite":    { "font": pixelFont_16, "fontColor": white },
+		"black": 		{ "font": pixelFont_32, "fontColor": black },
+		"smallBlack": 	{ "font": pixelFont_16, "fontColor": black },
+		"default": 		{ "font": pixelFont_32, "fontColor": black },
+	},
+}
