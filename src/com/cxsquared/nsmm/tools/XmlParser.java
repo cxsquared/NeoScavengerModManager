@@ -22,7 +22,7 @@ public class XmlParser {
 	private File neogameLocation;
 
 	public XmlParser() {
-		neogameLocation = new File("assets/neogame.xml");
+		neogameLocation = new File("./neogame.xml");
 		parseXml(neogameLocation);
 		createTableArray(neogameDatabase);
 		parseDatabase(neogameDatabase);
