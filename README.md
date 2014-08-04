@@ -3,6 +3,10 @@ NeoScavengerModManager
 
 A Mod Manager/Tool for the game Neo Scavenger.
 
+As of right now the programm can only be used to see all the information inside of a neogame.xml.
+No changes can be saved yet.
+The programm does however list all the conditions/itemProperties with both their id numbers and names for easier understanding of what's going on.
+
 To Set-Up project
 ======================
 Do to the use of LibGDX (http://libgdx.badlogicgames.com/) setup for the project isn't super straight forward.
