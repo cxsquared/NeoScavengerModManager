@@ -32,8 +32,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.Array;
 import com.cxsquared.nsmm.tools.DataParser;
 import com.cxsquared.nsmm.tools.XmlFilter;
 
@@ -48,7 +46,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	DefaultListModel<String> conditionsList, itemPropsList;
 
 	private final String NAME = "Neo Scavenger Mod Manager";
-	private final String VERSION = "0.0.6";
+	private final String VERSION = "0.1.1";
 	private JMenuBar menuBar;
 	private JMenu mnFile;
 	private JMenuItem mntmLoadNeogameFile, mntmRefreshNeogame, mntmSaveNeogame;
@@ -79,8 +77,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	 * Create the frame.
 	 */
 	public DataWindow() {
-		fileLocation = "neogame.xml";
-		dp = new DataParser(Gdx.files.internal(fileLocation));
+		dp = new DataParser();
 
 		getConditions();
 
@@ -111,7 +108,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 				fileLocation = chosenFile.toString();
 
-				dp = new DataParser(Gdx.files.absolute(fileLocation));
+				dp = new DataParser(fileLocation);
 
 				getConditions();
 
@@ -127,8 +124,8 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if (fileLocation.equals("neogame.xml"))
-					dp = new DataParser(Gdx.files.internal(fileLocation));
-				else dp = new DataParser(Gdx.files.absolute(fileLocation));
+					dp = new DataParser();
+				else dp = new DataParser(fileLocation);
 				resetTree();
 			}
 
@@ -199,7 +196,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		for (String name : dp.neogameTableTypeNames) {
 			category = new DefaultMutableTreeNode(name);
 			top.add(category);
-			Array<String> temp = dp.neogameTableData.get(name).keys().toArray();
+			List<String> temp = new ArrayList<String>(dp.neogameTableData.get(name).keySet());
 			temp.sort(new Comparator<String>() {
 				@Override
 				public int compare(String arg0, String arg1) {
@@ -260,7 +257,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 			labelConstraints.gridy = 0;
 			labelConstraints.weightx = 0.0;
 
-			for (String name : dp.neogameTableData.get(node.getParent().toString()).get(node.toString()).keys()) {
+			for (String name : dp.neogameTableData.get(node.getParent().toString()).get(node.toString()).keySet()) {
 				listOfLabels.add(new JLabel(name));
 				if (name.contains("Conditions")) {
 					listOfTextFields.add(createConditionsList(node, name));
@@ -356,15 +353,19 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 				} else {
 					if (tempString[i].startsWith("-")) {
 						if (tempString[i].contains("x")) {
-							tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i].substring(1, tempString[i].length() - 4)) - 1).split("-")[1] + ")");
+							tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i].split("x")[0].substring(1)) - 1).split("-")[1] + ")");
 						} else {
 							tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i].substring(1)) - 1).split("-")[1] + ")");
 						}
 					} else {
 						if (tempString[i].contains("x")) {
-							tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i].substring(0, tempString[i].length() - 4)) - 1).split("-")[1] + ")");
+							tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i].split("x")[0]) - 1).split("-")[1] + ")");
 						} else {
-							tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i]) - 1).split("-")[1] + ")");
+							if (tempString[i].equals("0")) {
+								tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i])).split("-")[1] + ")");
+							} else {
+								tempList.addElement(tempString[i] + " (" + dp.listOfConditions.get(Integer.parseInt(tempString[i]) - 1).split("-")[1] + ")");
+							}
 						}
 					}
 				}
