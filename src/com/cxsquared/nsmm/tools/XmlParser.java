@@ -1,6 +1,7 @@
 package com.cxsquared.nsmm.tools;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -20,9 +21,11 @@ public class XmlParser {
 	public HashMap<String, HashMap<String, HashMap<String, String>>> neogameTableData;
 
 	private File neogameLocation;
+	private boolean getList = true;
 
-	public XmlParser() {
-		neogameLocation = new File("./neogame.xml");
+	public XmlParser(URL file) {
+		getList = true;
+		neogameLocation = new File(file.getFile());
 		parseXml(neogameLocation);
 		createTableArray(neogameDatabase);
 		parseDatabase(neogameDatabase);
@@ -30,6 +33,7 @@ public class XmlParser {
 	}
 
 	public XmlParser(String file) {
+		getList = false;
 		neogameLocation = new File(file);
 		parseXml(neogameLocation);
 		createTableArray(neogameDatabase);
@@ -37,6 +41,15 @@ public class XmlParser {
 		createTableData(neogameTableTypes);
 	}
 	
+	public void loadNew(String file){
+		getList = false;
+		neogameLocation = new File(file);
+		parseXml(neogameLocation);
+		createTableArray(neogameDatabase);
+		parseDatabase(neogameDatabase);
+		createTableData(neogameTableTypes);
+	}
+
 	private void parseXml(File fXmlFile) {
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -79,8 +92,11 @@ public class XmlParser {
 
 	private void createTableData(HashMap<String, ArrayList<Element>> tableList) {
 		neogameTableData = new HashMap<String, HashMap<String, HashMap<String, String>>>();
-		listOfConditions = new ArrayList<String>();
-		listOfItemProps = new ArrayList<String>();
+		if (getList) {
+			System.out.println("Making new conditison list");
+			listOfConditions = new ArrayList<String>();
+			listOfItemProps = new ArrayList<String>();
+		}
 		for (String tableName : tableList.keySet()) {
 			HashMap<String, HashMap<String, String>> tableTemp = new HashMap<String, HashMap<String, String>>();
 			for (int i = 0; i < tableList.get(tableName).size(); i++) {
@@ -111,10 +127,12 @@ public class XmlParser {
 				}
 				// Putting Table with column data
 				tableTemp.put(eName + "-" + tempName, temp);
-				if (tableList.get(tableName).get(i).getAttribute("name").equals("conditions")) {
-					listOfConditions.add(eName + "-" + tempName);
-				} else if (tableList.get(tableName).get(i).getAttribute("name").equals("itemprops")) {
-					listOfItemProps.add(eName + "-" + tempName);
+				if (getList) {
+					if (tableList.get(tableName).get(i).getAttribute("name").equals("conditions")) {
+						listOfConditions.add(eName + "-" + tempName);
+					} else if (tableList.get(tableName).get(i).getAttribute("name").equals("itemprops")) {
+						listOfItemProps.add(eName + "-" + tempName);
+					}
 				}
 
 			}
