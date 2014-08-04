@@ -19,11 +19,19 @@ Everything should finally run now. You'll launch the game by launching the Deskt
 
 To-Do-List
 ======================
+
 -Add explanations for all tables and columns
+
 -Remove LibGDX code
+
 -Create graphical editor for encounters
+
 -Add mod saving support
+
 -Add mod xml export
+
 -Show images where needed
+
 -Generate getmod.php and getimage.php files
+
 -Improve UI
