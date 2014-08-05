@@ -5,9 +5,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -29,6 +32,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -53,8 +58,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	private JMenuItem mntmLoadNeogameFile, mntmRefreshNeogame, mntmSaveNeogame;
 	private GridBagLayout gbl_contentPane;
 
-	private List<JLabel> listOfLabels = new ArrayList<JLabel>();
-	private List<JComponent> listOfTextFields = new ArrayList<JComponent>();
+	private HashMap<JLabel, JComponent> listOfColumns = new HashMap<JLabel, JComponent>();
 
 	private JTabbedPane tabbedPane;
 
@@ -76,6 +80,11 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		this.setTitle(NAME + " " + VERSION);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setLocationRelativeTo(null);
+		this.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				xmlParser.save("neogame");
+			}
+		});
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 289, 393);
@@ -162,6 +171,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 	private void loadXml() {
 		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Select neogame.xml to load");
 		chooser.setFileFilter(new XmlFilter());
 		int choice = chooser.showOpenDialog(null);
 
@@ -231,11 +241,11 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		if (node == null) return;
 		if (node.isLeaf()) {
 			if (prevNode != null) {
+
 			}
 
 			tabbedPane.removeAll();
-			listOfLabels.clear();
-			listOfTextFields.clear();
+			listOfColumns.clear();
 
 			GridBagLayout gbl_temp = new GridBagLayout();
 			gbl_temp.columnWeights = new double[] { 0, 1.0, Double.MIN_VALUE };
@@ -260,21 +270,34 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 			labelConstraints.weightx = 0.0;
 
 			for (String name : xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).keySet()) {
-				listOfLabels.add(new JLabel(name));
 				if (name.contains("Conditions")) {
-					listOfTextFields.add(createConditionsList(node, name));
+					listOfColumns.put(new JLabel(name), createConditionsList(node, name));
 				} else if (name.contains("Properties")) {
-					listOfTextFields.add(createItemPropsList(node, name));
+					listOfColumns.put(new JLabel(name), createItemPropsList(node, name));
 				} else {
 					JTextPane temp = new JTextPane();
+					temp.getDocument().addDocumentListener(new DocumentListener() {
+						@Override
+						public void changedUpdate(DocumentEvent arg0) {
+
+						}
+
+						@Override
+						public void insertUpdate(DocumentEvent arg0) {
+						}
+
+						@Override
+						public void removeUpdate(DocumentEvent arg0) {
+						}
+					});
 					temp.setText(xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name));
 					temp.setEditable(true);
-					listOfTextFields.add(temp);
+					listOfColumns.put(new JLabel(name), temp);
 				}
 			}
 
-			for (int i = 0; i < listOfLabels.size(); i++) {
-				if (listOfTextFields.get(i).getClass().equals(JSplitPane.class)) {
+			for (JLabel label : listOfColumns.keySet()) {
+				if (listOfColumns.get(label).getClass().equals(JSplitPane.class)) {
 					textFieldConstraints.fill = GridBagConstraints.BOTH;
 				} else {
 					textFieldConstraints.fill = GridBagConstraints.NONE;
@@ -282,10 +305,10 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 				JPanel tempPanel = new JPanel(gbl_temp);
 
-				tempPanel.add(listOfLabels.get(i), labelConstraints);
-				tempPanel.add(listOfTextFields.get(i), textFieldConstraints);
+				tempPanel.add(label, labelConstraints);
+				tempPanel.add(listOfColumns.get(label), textFieldConstraints);
 
-				tabbedPane.addTab(listOfLabels.get(i).getText(), tempPanel);
+				tabbedPane.addTab(label.getText(), tempPanel);
 			}
 			tabbedPane.updateUI();
 			prevNode = node;
