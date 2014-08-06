@@ -9,7 +9,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
@@ -32,8 +31,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -50,12 +47,14 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	private XmlParser xmlParser;
 	private DefaultMutableTreeNode prevNode, top;
 	DefaultListModel<String> conditionsList, itemPropsList;
+	public static final String NSLOACTION = "nsLocation";
+	public static final String FILELOCATION = "fileLocaiton";
 
 	private final String NAME = "Neo Scavenger Mod Manager";
-	private final String VERSION = "0.1.2";
+	private final String VERSION = "0.1.3";
 	private JMenuBar menuBar;
 	private JMenu mnFile;
-	private JMenuItem mntmLoadNeogameFile, mntmRefreshNeogame, mntmSaveNeogame;
+	private JMenuItem mntmLoadNeogameFile, mntmRefreshNeogame, mntmSaveNeogame, mntmLoadNeogame, mntmExportNeogame, mntmSetLocationNeogame;
 	private GridBagLayout gbl_contentPane;
 
 	private HashMap<JLabel, JComponent> listOfColumns = new HashMap<JLabel, JComponent>();
@@ -68,72 +67,10 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	 * Create the frame.
 	 */
 	public DataWindow() {
-		if (prefs.get("fileLocation", "").equals("")) {
-			xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
-		} else {
-			xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
-			xmlParser.loadNew(prefs.get("fileLocation", ""));
-		}
-
+		getMods();
 		getConditions();
-
-		this.setTitle(NAME + " " + VERSION);
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		this.setLocationRelativeTo(null);
-		this.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				xmlParser.save("neogame");
-			}
-		});
-
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 289, 393);
-
-		menuBar = new JMenuBar();
-		setJMenuBar(menuBar);
-
-		mnFile = new JMenu("File");
-		menuBar.add(mnFile);
-
-		mntmLoadNeogameFile = new JMenuItem(new AbstractAction("Load neogame file") {
-			private static final long serialVersionUID = 1L;
-
-			public void actionPerformed(ActionEvent e) {
-				loadXml();
-				getConditions();
-				resetTree();
-			}
-		});
-		mntmLoadNeogameFile.setText("Load neogame.xml");
-		mnFile.add(mntmLoadNeogameFile);
-
-		mntmRefreshNeogame = new JMenuItem(new AbstractAction("Refresh Data") {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if (prefs.get("fileLocation", "").equals("")) {
-					xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
-				} else {
-					xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
-					xmlParser.loadNew(prefs.get("fileLocaiton", ""));
-				}
-				resetTree();
-			}
-
-		});
-		mnFile.add(mntmRefreshNeogame);
-
-		mntmSaveNeogame = new JMenuItem(new AbstractAction("Save neogame.xml") {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-
-			}
-
-		});
-		mnFile.add(mntmSaveNeogame);
+		createFrame();
+		createMenu();
 
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -169,6 +106,143 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		pack();
 	}
 
+	private void getMods() {
+		xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
+		if (!prefs.get(NSLOACTION, "").equals("")) {
+			File neoScavengerLocation = new File(prefs.get(NSLOACTION, "") + ".");
+			List<File> folderList = new ArrayList<File>();
+			File[] children = neoScavengerLocation.listFiles();
+			if (children != null) {
+				for (File child : children) {
+					if (child.isDirectory()) {
+						folderList.add(child);
+					}
+				}
+			}
+			for (File file : folderList) {
+				for (int i = 0; i < file.listFiles().length; i++) {
+					if (file.listFiles()[i].toString().contains("neogame.xml")) {
+						xmlParser.loadNew(file.listFiles()[i].toString());
+
+					}
+				}
+			}
+		}
+	}
+
+	private void createFrame() {
+		this.setTitle(NAME + " " + VERSION);
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.setLocationRelativeTo(null);
+		this.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				// xmlParser.save("neogame");
+			}
+		});
+
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 800, 600);
+	}
+
+	private void createMenu() {
+		menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+
+		mnFile = new JMenu("File");
+		menuBar.add(mnFile);
+
+		mntmLoadNeogameFile = new JMenuItem(new AbstractAction("Load neogame.xml") {
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e) {
+				loadXml();
+				getConditions();
+				resetTree();
+			}
+		});
+		mnFile.add(mntmLoadNeogameFile);
+
+		mntmRefreshNeogame = new JMenuItem(new AbstractAction("Refresh Data") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				refreshData();
+			}
+
+		});
+		mnFile.add(mntmRefreshNeogame);
+
+		mntmSaveNeogame = new JMenuItem(new AbstractAction("Save neogame data") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (prefs.get(FILELOCATION, "").equals("")) {
+					// xmlParser.save("neogame");
+				} else {
+					// String[] tempString = prefs.get(FILELOCATION,
+					// "").split("\\");
+					// xmlParser.save(tempString[tempString.length - 1]);
+				}
+			}
+		});
+		mnFile.add(mntmSaveNeogame);
+
+		mntmLoadNeogame = new JMenuItem(new AbstractAction("Load neogame data") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (prefs.get(FILELOCATION, "").equals("")) {
+					// xmlParser.load("neogame");
+				} else {
+					// String[] tempString = prefs.get(FILELOCATION,
+					// "").split("\\");
+					// xmlParser.load(tempString[tempString.length - 1]);
+				}
+			}
+		});
+		mnFile.add(mntmLoadNeogame);
+
+		mntmSetLocationNeogame = new JMenuItem(new AbstractAction("Set NeoScavenger Folder") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser chooser = new JFileChooser();
+				chooser.setDialogTitle("Select Neo Scavenger Game Folder");
+				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				chooser.setAcceptAllFileFilterUsed(false);
+
+				File chosenFile;
+				if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+					chosenFile = chooser.getSelectedFile();
+
+					prefs.put(NSLOACTION, chosenFile.toString());
+					try {
+						prefs.flush();
+					} catch (BackingStoreException e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("No Selection");
+				}
+				refreshData();
+			}
+		});
+		mnFile.add(mntmSetLocationNeogame);
+
+		mntmExportNeogame = new JMenuItem(new AbstractAction("Export neogame.xml") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+			}
+		});
+		mnFile.add(mntmExportNeogame);
+	}
+
 	private void loadXml() {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Select neogame.xml to load");
@@ -181,7 +255,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 		xmlParser.loadNew(chosenFile.toString());
 
-		prefs.put("fileLocation", chosenFile.toString());
+		prefs.put(FILELOCATION, chosenFile.toString());
 		try {
 			prefs.flush();
 		} catch (BackingStoreException e) {
@@ -202,22 +276,20 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 	private void createNodes(DefaultMutableTreeNode top) {
 		top.removeAllChildren();
+		DefaultMutableTreeNode mod = null;
 		DefaultMutableTreeNode category = null;
 		DefaultMutableTreeNode table = null;
 
-		for (String name : xmlParser.neogameTableTypeNames) {
-			category = new DefaultMutableTreeNode(name);
-			top.add(category);
-			List<String> temp = new ArrayList<String>(xmlParser.neogameTableData.get(name).keySet());
-			temp.sort(new Comparator<String>() {
-				@Override
-				public int compare(String arg0, String arg1) {
-					return Integer.compare(Integer.parseInt(arg0.split("-")[0]), Integer.parseInt(arg1.split("-")[0]));
+		for (ModNode modNode : xmlParser.modList.getChildren()) {
+			mod = new DefaultMutableTreeNode(modNode.getName());
+			top.add(mod);
+			for (ModNode tableCategory : modNode.getChildren()) {
+				category = new DefaultMutableTreeNode(tableCategory.getName());
+				mod.add(category);
+				for (ModNode tableNode : tableCategory.getChildren()) {
+					table = new DefaultMutableTreeNode(tableNode.getName());
+					category.add(table);
 				}
-			});
-			for (String tableName : temp) {
-				table = new DefaultMutableTreeNode(tableName);
-				category.add(table);
 			}
 		}
 	}
@@ -241,7 +313,6 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		if (node == null) return;
 		if (node.isLeaf()) {
 			if (prevNode != null) {
-
 			}
 
 			tabbedPane.removeAll();
@@ -268,31 +339,17 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 			labelConstraints.gridx = 0;
 			labelConstraints.gridy = 0;
 			labelConstraints.weightx = 0.0;
-
-			for (String name : xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).keySet()) {
-				if (name.contains("Conditions")) {
-					listOfColumns.put(new JLabel(name), createConditionsList(node, name));
-				} else if (name.contains("Properties")) {
-					listOfColumns.put(new JLabel(name), createItemPropsList(node, name));
-				} else {
-					JTextPane temp = new JTextPane();
-					temp.getDocument().addDocumentListener(new DocumentListener() {
-						@Override
-						public void changedUpdate(DocumentEvent arg0) {
-
-						}
-
-						@Override
-						public void insertUpdate(DocumentEvent arg0) {
-						}
-
-						@Override
-						public void removeUpdate(DocumentEvent arg0) {
-						}
-					});
-					temp.setText(xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name));
-					temp.setEditable(true);
-					listOfColumns.put(new JLabel(name), temp);
+			
+			for (ModNode columnNode : xmlParser.modList.getChild(node.getParent().getParent().toString()).getChild(node.getParent().toString()).getChild(node.toString()).getChildren()){
+				if (columnNode.getName().contains("Conditions")){
+					listOfColumns.put(new JLabel(columnNode.getName()), createConditionsList(columnNode));
+				} else if (columnNode.getName().contains("Properties")){
+					listOfColumns.put(new JLabel(columnNode.getName()), createItemPropsList(columnNode));
+				} else{
+					JTextPane columnData = new JTextPane();
+					columnData.setText(columnNode.getData());
+					columnData.setEditable(true);
+					listOfColumns.put(new JLabel(columnNode.getName()), columnData);
 				}
 			}
 
@@ -315,97 +372,95 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		}
 	}
 
-	private JComponent createItemPropsList(DefaultMutableTreeNode node, String name) {
-		String[] tempString = { "" };
-		if (xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name) != null) tempString = xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name).split(",");
-		JSplitPane tempPane = new JSplitPane();
-		DefaultListModel<String> tempList = new DefaultListModel<String>();
-		for (int i = 0; i < tempString.length; i++) {
-			if (!tempString[i].equals("")) {
-				if (tempString[i].contains(":")) {
-					tempList.addElement(tempString[i] + " (" + xmlParser.listOfItemProps.get(Integer.parseInt(tempString[i].split(":")[1]) - 1).split("-")[1] + ")");
+	private JComponent createItemPropsList(ModNode column) {
+		String[] itemStrings = { "" };
+		if (column.getData() != null) itemStrings = column.getData().split(",");
+		JSplitPane columnData = new JSplitPane();
+		DefaultListModel<String> itemList = new DefaultListModel<String>();
+		for (int i = 0; i < itemStrings.length; i++) {
+			if (!itemStrings[i].equals("")) {
+				if (itemStrings[i].contains(":")) {
+					itemList.addElement(itemStrings[i] + " (" + xmlParser.listOfItemProps.get(Integer.parseInt(itemStrings[i].split(":")[1]) - 1).split("-")[1] + ")");
 				} else {
-					tempList.addElement(tempString[i] + " (" + xmlParser.listOfItemProps.get(Integer.parseInt(tempString[i]) - 1).split("-")[1] + ")");
+					itemList.addElement(itemStrings[i] + " (" + xmlParser.listOfItemProps.get(Integer.parseInt(itemStrings[i]) - 1).split("-")[1] + ")");
 				}
 			}
 		}
-		tempPane.setLeftComponent(new JScrollPane(new JList<String>(tempList)));
-		tempPane.setRightComponent(new JScrollPane(new JList<String>(itemPropsList)));
-		return tempPane;
+		columnData.setLeftComponent(new JScrollPane(new JList<String>(itemList)));
+		columnData.setRightComponent(new JScrollPane(new JList<String>(itemPropsList)));
+		return columnData;
 	}
 
-	private JComponent createConditionsList(DefaultMutableTreeNode node, String name) {
-		String[] tempString = { "" };
-		if (xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name) != null) {
-			tempString = xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name).split(",");
-		}
+	private JComponent createConditionsList(ModNode column) {
+		String[] conditionStrings = { "" };
+		if (column.getData() != null) conditionStrings = column.getData().split(",");
 		JSplitPane tempPane = new JSplitPane();
 		JTextPane tempText = new JTextPane();
 		DefaultListModel<String> tempList = new DefaultListModel<String>();
 		int numberOfText = 0;
-		for (int i = 0; i < tempString.length; i++) {
-			if (tempString[i].length() > 0) {
-				if (node.getParent().toString().equals("battlemoves")) {
-					if (name.contains("PreConditions")) {
-						if (tempString[i].startsWith("-")) {
-							tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].substring(1)) - 1).split("-")[1] + ")");
+		for (int i = 0; i < conditionStrings.length; i++) {
+			if (conditionStrings[i].length() > 0) {
+				if (column.getParent().getName().equals("battlemoves")) {
+					if (column.getName().contains("PreConditions")) {
+						if (conditionStrings[i].startsWith("-")) {
+							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1).split("-")[1] + ")");
 						} else {
-							tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i]) - 1).split("-")[1] + ")");
+							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i]) - 1).split("-")[1] + ")");
 						}
 					} else {
 						if (i < 3) {
-							if (tempString[i].contains("-")) {
-								tempText.setText(xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name).split("]")[numberOfText] + "]" + " [-"
-										+ xmlParser.listOfConditions.get(Integer.parseInt(tempString[0].substring(2)) - 1) + "," + tempString[1] + "," + tempString[2]);
+							if (conditionStrings[i].contains("-")) {
+								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " [-"
+										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(2)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
 							} else {
-								tempText.setText(xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name).split("]")[numberOfText] + "]" + " ["
-										+ xmlParser.listOfConditions.get(Integer.parseInt(tempString[0].substring(1)) - 1) + "," + tempString[1] + "," + tempString[2]);
+								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " ["
+										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(1)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
 							}
 						} else {
-							if (tempString[i].contains("-")) {
-								tempText.setText(tempText.getText() + "\n" + xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name).split("]")[numberOfText].substring(1) + "]" + " [-"
-										+ xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].substring(2)) - 1) + "," + tempString[i + 1] + "," + tempString[i + 2]);
+							if (conditionStrings[i].contains("-")) {
+								tempText.setText(tempText.getText() + "\n" +column.getData().split("]")[numberOfText].substring(1) + "]" + " [-"
+										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(2)) - 1) + "," + conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
 							} else {
-								tempText.setText(tempText.getText() + "\n" + xmlParser.neogameTableData.get(node.getParent().toString()).get(node.toString()).get(name).split("]")[numberOfText].substring(1) + "]" + " ["
-										+ xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].substring(1)) - 1) + "," + tempString[i + 1] + "," + tempString[i + 2]);
+								tempText.setText(tempText.getText() + "\n" + column.getData().split("]")[numberOfText].substring(1) + "]" + " ["
+										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1) + "," + conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
 							}
 						}
 						numberOfText++;
 						i += 2;
 					}
-				} else if (node.getParent().toString().equals("creatures")) {
-					tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].split("=")[0]) - 1).split("-")[1] + ")");
-				} else if (node.getParent().toString().equals("itemtypes")) {
-					if (tempString[i].contains("-")) {
-						tempList.addElement(tempString[i] + " (-" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].split("=")[1].substring(1)) - 1).split("-")[1] + ")");
+				} else if (column.getParent().getName().equals("creatures")) {
+					tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].split("=")[0]) - 1).split("-")[1] + ")");
+				} else if (column.getParent().getName().equals("itemtypes")) {
+					if (conditionStrings[i].contains("-")) {
+						tempList.addElement(conditionStrings[i] + " (-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].split("=")[1].substring(1)) - 1).split("-")[1] + ")");
 					} else {
-						tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].split("=")[1]) - 1).split("-")[1] + ")");
+						tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].split("=")[1]) - 1).split("-")[1] + ")");
 					}
 				} else {
-					if (tempString[i].startsWith("-")) {
-						if (tempString[i].contains("x")) {
-							tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].split("x")[0].substring(1)) - 1).split("-")[1] + ")");
+					if (conditionStrings[i].startsWith("-")) {
+						if (conditionStrings[i].contains("x")) {
+							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].split("x")[0].substring(1)) - 1).split("-")[1] + ")");
 						} else {
-							tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].substring(1)) - 1).split("-")[1] + ")");
+							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1).split("-")[1] + ")");
 						}
 					} else {
-						if (tempString[i].contains("x")) {
-							tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i].split("x")[0]) - 1).split("-")[1] + ")");
+						if (conditionStrings[i].contains("x")) {
+							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].split("x")[0]) - 1).split("-")[1] + ")");
 						} else {
-							if (tempString[i].equals("0")) {
-								tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i])).split("-")[1] + ")");
+							if (conditionStrings[i].equals("0")) {
+								tempList.addElement(conditionStrings[i] + " (?)");
 							} else {
-								tempList.addElement(tempString[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(tempString[i]) - 1).split("-")[1] + ")");
+								tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i]) - 1).split("-")[1] + ")");
 							}
 						}
 					}
 				}
 			} else {
-				tempList.addElement(tempString[i]);
+				tempList.addElement(conditionStrings[i]);
 			}
 		}
-		if (node.getParent().toString().equals(("battlemoves"))) {
-			if (name.contains("PreConditions")) {
+		if (column.getParent().getName().equals(("battlemoves"))) {
+			if (column.getData().contains("PreConditions")) {
 				tempPane.setLeftComponent(new JList<String>(tempList));
 			} else {
 				tempPane.setLeftComponent(tempText);
@@ -415,6 +470,16 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		}
 		tempPane.setRightComponent(new JScrollPane(new JList<String>(conditionsList)));
 		return tempPane;
+	}
+
+	private void refreshData() {
+		if (prefs.get(FILELOCATION, "").equals("")) {
+			xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
+		} else {
+			xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
+			xmlParser.loadNew(prefs.get(FILELOCATION, ""));
+		}
+		resetTree();
 	}
 
 	public static void main(String[] args) {
