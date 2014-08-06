@@ -29,11 +29,19 @@ public class XmlParser {
 	public ModNode modList;
 	public ArrayList<String> listOfConditions = new ArrayList<String>();
 	public ArrayList<String> listOfItemProps = new ArrayList<String>();
-
-	public XmlParser(URL file) {
-		createNeoScavengerData(new File(file.getFile()));
+	
+	public XmlParser(String file){
+		this(new File(file));
+	}
+	
+	public XmlParser(File file){
+		createNeoScavengerData(file);
 		createConditionsList();
 		createItemPropsList();
+	}
+
+	public XmlParser(URL file) {
+		this(file.getFile());
 	}
 
 	public void loadNew(String file) {

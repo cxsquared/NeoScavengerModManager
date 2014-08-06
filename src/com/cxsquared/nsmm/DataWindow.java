@@ -24,6 +24,7 @@ import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -67,6 +68,9 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	 * Create the frame.
 	 */
 	public DataWindow() {
+		if(prefs.get(NSLOACTION, "").equals("")){
+			setNeoScavengerFolder();
+		}
 		getMods();
 		getConditions();
 		createFrame();
@@ -107,13 +111,15 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	}
 
 	private void getMods() {
-		xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
 		if (!prefs.get(NSLOACTION, "").equals("")) {
 			File neoScavengerLocation = new File(prefs.get(NSLOACTION, "") + ".");
 			List<File> folderList = new ArrayList<File>();
 			File[] children = neoScavengerLocation.listFiles();
 			if (children != null) {
 				for (File child : children) {
+					if(child.getName().equals("neogame.xml")){
+						xmlParser = new XmlParser(child);
+					}
 					if (child.isDirectory()) {
 						folderList.add(child);
 					}
@@ -127,6 +133,8 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 					}
 				}
 			}
+		} else {
+			xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
 		}
 	}
 
@@ -210,24 +218,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				JFileChooser chooser = new JFileChooser();
-				chooser.setDialogTitle("Select Neo Scavenger Game Folder");
-				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				chooser.setAcceptAllFileFilterUsed(false);
-
-				File chosenFile;
-				if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-					chosenFile = chooser.getSelectedFile();
-
-					prefs.put(NSLOACTION, chosenFile.toString());
-					try {
-						prefs.flush();
-					} catch (BackingStoreException e) {
-						e.printStackTrace();
-					}
-				} else {
-					System.out.println("No Selection");
-				}
+				setNeoScavengerFolder();
 				refreshData();
 			}
 		});
@@ -235,14 +226,41 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 		mntmExportNeogame = new JMenuItem(new AbstractAction("Export neogame.xml") {
 			private static final long serialVersionUID = 1L;
+
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
-				ModNode mod = xmlParser.modList.getChild(node.getParent().getParent().toString());
-				xmlParser.exportXML(mod, mod.getData());
+				if (node.isLeaf()) {
+					ModNode mod = xmlParser.modList.getChild(node.getParent().getParent().toString());
+					xmlParser.exportXML(mod, mod.getData());
+					infoBox("Xml export to mod location as neogame_nsmm.xml.\nRename the neogame_nsmm.xml to neogame.xml and replace the old mod neogame.xml to activate mod", "Xml Export Successful!");
+				}else {
+					infoBox("Xml export failed. Select a node inside the mod you want to export\nand try again.", "Xml Export Failed.");
+				}
 			}
 		});
 		mnFile.add(mntmExportNeogame);
+	}
+	
+	private void setNeoScavengerFolder(){
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Select Neo Scavenger Game Folder");
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		chooser.setAcceptAllFileFilterUsed(false);
+
+		File chosenFile;
+		if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+			chosenFile = chooser.getSelectedFile();
+
+			prefs.put(NSLOACTION, chosenFile.toString());
+			try {
+				prefs.flush();
+			} catch (BackingStoreException e) {
+				e.printStackTrace();
+			}
+		} else {
+			System.out.println("No Selection");
+		}
 	}
 
 	private void loadXml() {
@@ -341,13 +359,13 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 			labelConstraints.gridx = 0;
 			labelConstraints.gridy = 0;
 			labelConstraints.weightx = 0.0;
-			
-			for (ModNode columnNode : xmlParser.modList.getChild(node.getParent().getParent().toString()).getChild(node.getParent().toString()).getChild(node.toString()).getChildren()){
-				if (columnNode.getName().contains("Conditions")){
+
+			for (ModNode columnNode : xmlParser.modList.getChild(node.getParent().getParent().toString()).getChild(node.getParent().toString()).getChild(node.toString()).getChildren()) {
+				if (columnNode.getName().contains("Conditions")) {
 					listOfColumns.put(new JLabel(columnNode.getName()), createConditionsList(columnNode));
-				} else if (columnNode.getName().contains("Properties")){
+				} else if (columnNode.getName().contains("Properties")) {
 					listOfColumns.put(new JLabel(columnNode.getName()), createItemPropsList(columnNode));
-				} else{
+				} else {
 					JTextPane columnData = new JTextPane();
 					columnData.setText(columnNode.getData());
 					columnData.setEditable(true);
@@ -412,19 +430,17 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 					} else {
 						if (i < 3) {
 							if (conditionStrings[i].contains("-")) {
-								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " [-"
-										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(2)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
+								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " [-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(2)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
 							} else {
-								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " ["
-										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(1)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
+								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " [" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(1)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
 							}
 						} else {
 							if (conditionStrings[i].contains("-")) {
-								tempText.setText(tempText.getText() + "\n" +column.getData().split("]")[numberOfText].substring(1) + "]" + " [-"
-										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(2)) - 1) + "," + conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
+								tempText.setText(tempText.getText() + "\n" + column.getData().split("]")[numberOfText].substring(1) + "]" + " [-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(2)) - 1) + ","
+										+ conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
 							} else {
-								tempText.setText(tempText.getText() + "\n" + column.getData().split("]")[numberOfText].substring(1) + "]" + " ["
-										+ xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1) + "," + conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
+								tempText.setText(tempText.getText() + "\n" + column.getData().split("]")[numberOfText].substring(1) + "]" + " [" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1) + ","
+										+ conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
 							}
 						}
 						numberOfText++;
@@ -475,13 +491,13 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	}
 
 	private void refreshData() {
-		if (prefs.get(FILELOCATION, "").equals("")) {
-			xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
-		} else {
-			xmlParser = new XmlParser(getClass().getResource("neogame.xml"));
-			xmlParser.loadNew(prefs.get(FILELOCATION, ""));
-		}
+		loadXml();
+		getConditions();
 		resetTree();
+	}
+
+	public static void infoBox(String infoMessage, String title) {
+		JOptionPane.showMessageDialog(null, infoMessage, title, JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	public static void main(String[] args) {
