@@ -49,13 +49,12 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	private DefaultMutableTreeNode prevNode, top;
 	DefaultListModel<String> conditionsList, itemPropsList;
 	public static final String NSLOACTION = "nsLocation";
-	public static final String FILELOCATION = "fileLocaiton";
 
 	private final String NAME = "Neo Scavenger Mod Manager";
 	private final String VERSION = "0.1.3";
 	private JMenuBar menuBar;
 	private JMenu mnFile;
-	private JMenuItem mntmLoadNeogameFile, mntmRefreshNeogame, mntmSaveNeogame, mntmLoadNeogame, mntmExportNeogame, mntmSetLocationNeogame;
+	private JMenuItem mntmAddNeogameFile, mntmRefreshNeogame, mntmExportNeogame, mntmSetLocationNeogame;
 	private GridBagLayout gbl_contentPane;
 
 	private HashMap<JLabel, JComponent> listOfColumns = new HashMap<JLabel, JComponent>();
@@ -68,7 +67,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	 * Create the frame.
 	 */
 	public DataWindow() {
-		if(prefs.get(NSLOACTION, "").equals("")){
+		if (prefs.get(NSLOACTION, "").equals("")) {
 			setNeoScavengerFolder();
 		}
 		getMods();
@@ -117,7 +116,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 			File[] children = neoScavengerLocation.listFiles();
 			if (children != null) {
 				for (File child : children) {
-					if(child.getName().equals("neogame.xml")){
+					if (child.getName().equals("neogame.xml")) {
 						xmlParser = new XmlParser(child);
 					}
 					if (child.isDirectory()) {
@@ -159,16 +158,14 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		mnFile = new JMenu("File");
 		menuBar.add(mnFile);
 
-		mntmLoadNeogameFile = new JMenuItem(new AbstractAction("Load neogame.xml") {
+		mntmAddNeogameFile = new JMenuItem(new AbstractAction("Add new Mod") {
 			private static final long serialVersionUID = 1L;
 
 			public void actionPerformed(ActionEvent e) {
 				loadXml();
-				getConditions();
-				resetTree();
 			}
 		});
-		mnFile.add(mntmLoadNeogameFile);
+		mnFile.add(mntmAddNeogameFile);
 
 		mntmRefreshNeogame = new JMenuItem(new AbstractAction("Refresh Data") {
 			private static final long serialVersionUID = 1L;
@@ -180,38 +177,6 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 		});
 		mnFile.add(mntmRefreshNeogame);
-
-		mntmSaveNeogame = new JMenuItem(new AbstractAction("Save neogame data") {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if (prefs.get(FILELOCATION, "").equals("")) {
-					// xmlParser.save("neogame");
-				} else {
-					// String[] tempString = prefs.get(FILELOCATION,
-					// "").split("\\");
-					// xmlParser.save(tempString[tempString.length - 1]);
-				}
-			}
-		});
-		mnFile.add(mntmSaveNeogame);
-
-		mntmLoadNeogame = new JMenuItem(new AbstractAction("Load neogame data") {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if (prefs.get(FILELOCATION, "").equals("")) {
-					// xmlParser.load("neogame");
-				} else {
-					// String[] tempString = prefs.get(FILELOCATION,
-					// "").split("\\");
-					// xmlParser.load(tempString[tempString.length - 1]);
-				}
-			}
-		});
-		mnFile.add(mntmLoadNeogame);
 
 		mntmSetLocationNeogame = new JMenuItem(new AbstractAction("Set NeoScavenger Folder") {
 			private static final long serialVersionUID = 1L;
@@ -234,15 +199,15 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 					ModNode mod = xmlParser.modList.getChild(node.getParent().getParent().toString());
 					xmlParser.exportXML(mod, mod.getData());
 					infoBox("Xml export to mod location as neogame_nsmm.xml.\nRename the neogame_nsmm.xml to neogame.xml and replace the old mod neogame.xml to activate mod", "Xml Export Successful!");
-				}else {
+				} else {
 					infoBox("Xml export failed. Select a node inside the mod you want to export\nand try again.", "Xml Export Failed.");
 				}
 			}
 		});
 		mnFile.add(mntmExportNeogame);
 	}
-	
-	private void setNeoScavengerFolder(){
+
+	private void setNeoScavengerFolder() {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Select Neo Scavenger Game Folder");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -275,12 +240,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 		xmlParser.loadNew(chosenFile.toString());
 
-		prefs.put(FILELOCATION, chosenFile.toString());
-		try {
-			prefs.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-		}
+		resetTree();
 	}
 
 	private void getConditions() {
@@ -333,6 +293,15 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		if (node == null) return;
 		if (node.isLeaf()) {
 			if (prevNode != null) {
+				for (JLabel columnName : listOfColumns.keySet()) {
+					if (listOfColumns.get(columnName).getClass().equals(JTextPane.class)) {
+						JTextPane columnText = (JTextPane) listOfColumns.get(columnName);
+						ModNode columnNode = xmlParser.modList.getChild(prevNode.getParent().getParent().toString()).getChild(prevNode.getParent().toString()).getChild(prevNode.toString()).getChild(columnName.getText());
+						if (!columnText.getText().equals(columnNode.getData())) {
+							columnNode.setData(columnText.getText());
+						}
+					}
+				}
 			}
 
 			tabbedPane.removeAll();
@@ -491,7 +460,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	}
 
 	private void refreshData() {
-		loadXml();
+		getMods();
 		getConditions();
 		resetTree();
 	}
