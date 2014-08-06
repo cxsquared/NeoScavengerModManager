@@ -235,9 +235,11 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 
 		mntmExportNeogame = new JMenuItem(new AbstractAction("Export neogame.xml") {
 			private static final long serialVersionUID = 1L;
-
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+				ModNode mod = xmlParser.modList.getChild(node.getParent().getParent().toString());
+				xmlParser.exportXML(mod, mod.getData());
 			}
 		});
 		mnFile.add(mntmExportNeogame);
