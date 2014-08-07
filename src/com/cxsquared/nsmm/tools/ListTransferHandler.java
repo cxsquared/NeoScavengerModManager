@@ -91,6 +91,11 @@ public class ListTransferHandler extends TransferHandler {
 				String dataText = values[i];
 				if (list.getName().equals("vAttackerConditions")) {
 					dataText = dataText.split("-")[0] + "x1.0 (" + dataText.split("-")[1] + ")";
+				} else if (list.getName().equals("vUsConditions") || list.getName().equals("vThemConditions") || list.getName().equals("vPairConditions") || list.getName().equals("vUsFailConditions") || list.getName().equals("vThemFailConditions")
+						|| list.getName().equals("vPairFailConditions")) {
+					dataText = "[" + dataText.split("-")[0] + ",0,0] ([" + dataText.split("-")[1] + ",0,0])";
+				} else if (list.getName().equals("vUsPreConditions") || list.getName().equals("vThemPreConditions")) {
+					dataText = dataText.split("-")[0] + " (" + dataText.split("-")[1] + ")";
 				}
 				if (insert) {
 					listModel.add(index++, dataText);
