@@ -392,7 +392,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		int numberOfText = 0;
 		for (int i = 0; i < conditionStrings.length; i++) {
 			if (conditionStrings[i].length() > 0) {
-				if (column.getParent().getName().equals("battlemoves")) {
+				if (column.getParent().getParent().getName().equals("battlemoves")) {
 					if (column.getName().contains("PreConditions")) {
 						if (conditionStrings[i].startsWith("-")) {
 							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1).split("-")[1] + ")");
@@ -418,9 +418,9 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 						numberOfText++;
 						i += 2;
 					}
-				} else if (column.getParent().getName().equals("creatures")) {
+				} else if (column.getParent().getParent().getName().equals("creatures")) {
 					tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].split("=")[0]) - 1).split("-")[1] + ")");
-				} else if (column.getParent().getName().equals("itemtypes")) {
+				} else if (column.getParent().getParent().getName().equals("itemtypes")) {
 					if (conditionStrings[i].contains("-")) {
 						tempList.addElement(conditionStrings[i] + " (-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].split("=")[1].substring(1)) - 1).split("-")[1] + ")");
 					} else {
@@ -451,18 +451,18 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		}
 		if (column.getParent().getName().equals(("battlemoves"))) {
 			if (column.getData().contains("PreConditions")) {
-				tempPane.setLeftComponent(createList(tempList, ""));
+				tempPane.setLeftComponent(createList(tempList, column.getName()));
 			} else {
 				tempPane.setLeftComponent(tempText);
 			}
 		} else {
-			tempPane.setLeftComponent(createList(tempList, ""));
+			tempPane.setLeftComponent(createList(tempList, column.getName()));
 		}
 		tempPane.setRightComponent(new JScrollPane(createList(conditionsList, "conditionsList")));
 		return tempPane;
 	}
-	
-	private JList<String> createList(DefaultListModel<String> list, String name){
+
+	private JComponent createList(DefaultListModel<String> list, String name) {
 		JList<String> textList = new JList<String>(list);
 		textList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		textList.setDragEnabled(true);

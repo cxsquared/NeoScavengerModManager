@@ -88,15 +88,19 @@ public class ListTransferHandler extends TransferHandler {
 		if (!list.getName().equals("conditionsList")) {
 			// Perform the actual import
 			for (int i = 0; i < values.length; i++) {
+				String dataText = values[i];
+				if (list.getName().equals("vAttackerConditions")) {
+					dataText = dataText.split("-")[0] + "x1.0 (" + dataText.split("-")[1] + ")";
+				}
 				if (insert) {
-					listModel.add(index++, values[i]);
+					listModel.add(index++, dataText);
 				} else {
 					// If the items go beyond the end of the current
 					// list add, them in.
 					if (index < listModel.getSize()) {
-						listModel.set(index++, values[i]);
+						listModel.set(index++, dataText);
 					} else {
-						listModel.add(index++, values[i]);
+						listModel.add(index++, dataText);
 					}
 				}
 			}
