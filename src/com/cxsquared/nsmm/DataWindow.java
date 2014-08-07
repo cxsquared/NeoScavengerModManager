@@ -16,6 +16,7 @@ import java.util.prefs.Preferences;
 
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
+import javax.swing.DropMode;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -31,12 +32,14 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
+import com.cxsquared.nsmm.tools.ListTransferHandler;
 import com.cxsquared.nsmm.tools.XmlFilter;
 import com.cxsquared.nsmm.tools.XmlParser;
 
@@ -448,15 +451,25 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		}
 		if (column.getParent().getName().equals(("battlemoves"))) {
 			if (column.getData().contains("PreConditions")) {
-				tempPane.setLeftComponent(new JList<String>(tempList));
+				tempPane.setLeftComponent(createList(tempList, ""));
 			} else {
 				tempPane.setLeftComponent(tempText);
 			}
 		} else {
-			tempPane.setLeftComponent(new JList<String>(tempList));
+			tempPane.setLeftComponent(createList(tempList, ""));
 		}
-		tempPane.setRightComponent(new JScrollPane(new JList<String>(conditionsList)));
+		tempPane.setRightComponent(new JScrollPane(createList(conditionsList, "conditionsList")));
 		return tempPane;
+	}
+	
+	private JList<String> createList(DefaultListModel<String> list, String name){
+		JList<String> textList = new JList<String>(list);
+		textList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+		textList.setDragEnabled(true);
+		textList.setTransferHandler(new ListTransferHandler());
+		textList.setName(name);
+		textList.setDropMode(DropMode.INSERT);
+		return textList;
 	}
 
 	private void refreshData() {
