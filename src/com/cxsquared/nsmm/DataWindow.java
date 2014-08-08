@@ -468,46 +468,67 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		for (JLabel columnName : listOfColumns.keySet()) {
 			ModNode columnNode = xmlParser.modList.getChild(prevNode.getParent().getParent().toString()).getChild(prevNode.getParent().toString()).getChild(prevNode.toString()).getChild(columnName.getText());
 			if (listOfColumns.get(columnName).getClass().equals(JTextPane.class)) {
-				JTextPane columnText = (JTextPane) listOfColumns.get(columnName);
-				if (!columnText.getText().equals(columnNode.getData())) {
-					columnNode.setData(columnText.getText());
-				}
+				changeTextPane(columnNode, columnName);
 			} else if (listOfColumns.get(columnName).getClass().equals(JSplitPane.class)) {
-				JSplitPane columnPane = (JSplitPane) listOfColumns.get(columnName);
-				@SuppressWarnings("unchecked")
-				JList<String> columnList = (JList<String>) columnPane.getLeftComponent();
-				ListModel<String> columnModel = columnList.getModel();
-				if (columnModel.getSize() == 0) {
-					columnNode.setData("");
-				} else if (columnNode.getData().equals("")) {
-					if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
-							|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
-					} else {
-						for (int j = 0; j < columnModel.getSize(); j++) {
-							if (j == 0) {
-								columnNode.setData(columnModel.getElementAt(j).split("\\(")[0]);
-							} else {
-								columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("\\(")[0]);
-							}
-						}
-						break;
+				changeSplitPane(columnNode, columnName);
+			}
+		}
+	}
+
+	private void changeTextPane(ModNode columnNode, JLabel columnName) {
+		JTextPane columnText = (JTextPane) listOfColumns.get(columnName);
+		if (!columnText.getText().equals(columnNode.getData())) {
+			columnNode.setData(columnText.getText());
+		}
+	}
+
+	private void changeSplitPane(ModNode columnNode, JLabel columnName) {
+		JSplitPane columnPane = (JSplitPane) listOfColumns.get(columnName);
+		@SuppressWarnings("unchecked")
+		JList<String> columnList = (JList<String>) columnPane.getLeftComponent();
+		ListModel<String> columnModel = columnList.getModel();
+		if (columnModel.getSize() == 0) {
+			columnNode.setData("");
+		} else if (columnNode.getData().equals("")) {
+			if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
+					|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
+				changeBattlemoves(columnNode, columnModel);
+				return;
+			} else {
+				changeConditions(columnNode, columnModel);
+				return;
+			}
+		} else {
+			for (int i = 0; i < columnModel.getSize(); i++) {
+				if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
+						|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
+					if (!columnModel.getElementAt(i).split("]")[0].equals(columnNode.getData().split("]")[i])) {
+						changeBattlemoves(columnNode, columnModel);
 					}
-				} else {
-					for (int i = 0; i < columnModel.getSize(); i++) {
-						if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
-								|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
-						} else if (!columnModel.getElementAt(i).split("\\(")[0].equals(columnNode.getData().split(",")[i])) {
-							for (int j = 0; j < columnModel.getSize(); j++) {
-								if (j == 0) {
-									columnNode.setData(columnModel.getElementAt(j).split("\\(")[0]);
-								} else {
-									columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("\\(")[0]);
-								}
-							}
-							break;
-						}
-					}
+				} else if (!columnModel.getElementAt(i).split("\\(")[0].equals(columnNode.getData().split(",")[i])) {
+					changeConditions(columnNode, columnModel);
+					return;
 				}
+			}
+		}
+	}
+
+	private void changeConditions(ModNode columnNode, ListModel<String> columnModel) {
+		for (int j = 0; j < columnModel.getSize(); j++) {
+			if (j == 0) {
+				columnNode.setData(columnModel.getElementAt(j).split("\\(")[0]);
+			} else {
+				columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("\\(")[0]);
+			}
+		}
+	}
+
+	private void changeBattlemoves(ModNode columnNode, ListModel<String> columnModel) {
+		for (int j = 0; j < columnModel.getSize(); j++) {
+			if (j == 0) {
+				columnNode.setData(columnModel.getElementAt(j).split("]")[0] + "]");
+			} else {
+				columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("]")[0] + "]");
 			}
 		}
 	}
