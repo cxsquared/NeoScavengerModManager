@@ -483,7 +483,6 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 					if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
 							|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
 					} else {
-						System.out.println("Gettin it");
 						for (int j = 0; j < columnModel.getSize(); j++) {
 							if (j == 0) {
 								columnNode.setData(columnModel.getElementAt(j).split("\\(")[0]);
@@ -491,14 +490,13 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 								columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("\\(")[0]);
 							}
 						}
-						return;
+						break;
 					}
 				} else {
 					for (int i = 0; i < columnModel.getSize(); i++) {
 						if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
 								|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
 						} else if (!columnModel.getElementAt(i).split("\\(")[0].equals(columnNode.getData().split(",")[i])) {
-							System.out.println("not blank " + columnNode.getName()+ "data =" + columnNode.getData());
 							for (int j = 0; j < columnModel.getSize(); j++) {
 								if (j == 0) {
 									columnNode.setData(columnModel.getElementAt(j).split("\\(")[0]);
@@ -506,7 +504,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 									columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("\\(")[0]);
 								}
 							}
-							return;
+							break;
 						}
 					}
 				}
