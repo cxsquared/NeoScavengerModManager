@@ -13,7 +13,9 @@ public class ListTransferHandler extends TransferHandler {
 	private static final long serialVersionUID = 1L;
 
 	private int[] indices = null;
+	@SuppressWarnings("unused")
 	private int addIndex = -1; // Location where items were added
+	@SuppressWarnings("unused")
 	private int addCount = 0; // Number of items added;
 
 	// Only support strings
@@ -89,23 +91,25 @@ public class ListTransferHandler extends TransferHandler {
 			// Perform the actual import
 			for (int i = 0; i < values.length; i++) {
 				String dataText = values[i];
-				if (list.getName().equals("vAttackerConditions")) {
-					dataText = dataText.split("-")[0] + "x1.0 (" + dataText.split("-")[1] + ")";
-				} else if (list.getName().equals("vUsConditions") || list.getName().equals("vThemConditions") || list.getName().equals("vPairConditions") || list.getName().equals("vUsFailConditions") || list.getName().equals("vThemFailConditions")
-						|| list.getName().equals("vPairFailConditions")) {
-					dataText = "[" + dataText.split("-")[0] + ",0,0] ([" + dataText.split("-")[1] + ",0,0])";
-				} else if (list.getName().equals("vUsPreConditions") || list.getName().equals("vThemPreConditions")) {
-					dataText = dataText.split("-")[0] + " (" + dataText.split("-")[1] + ")";
-				}
-				if (insert) {
-					listModel.add(index++, dataText);
-				} else {
-					// If the items go beyond the end of the current
-					// list add, them in.
-					if (index < listModel.getSize()) {
-						listModel.set(index++, dataText);
-					} else {
+				if (!dataText.equals("\n")) {
+					if (list.getName().equals("vAttackerConditions")) {
+						dataText = dataText.split("-")[0] + "x1.0 (" + dataText.split("-")[1] + ")";
+					} else if (list.getName().equals("vUsConditions") || list.getName().equals("vThemConditions") || list.getName().equals("vPairConditions") || list.getName().equals("vUsFailConditions")
+							|| list.getName().equals("vThemFailConditions") || list.getName().equals("vPairFailConditions")) {
+						dataText = "[" + dataText.split("-")[0] + ",0,0] [" + dataText + ",0,0]";
+					} else if (list.getName().equals("vUsPreConditions") || list.getName().equals("vThemPreConditions")) {
+						dataText = dataText.split("-")[0] + " (" + dataText.split("-")[1] + ")";
+					}
+					if (insert) {
 						listModel.add(index++, dataText);
+					} else {
+						// If the items go beyond the end of the current
+						// list add, them in.
+						if (index < listModel.getSize()) {
+							listModel.set(index++, dataText);
+						} else {
+							listModel.add(index++, dataText);
+						}
 					}
 				}
 			}

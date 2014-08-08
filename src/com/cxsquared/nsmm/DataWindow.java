@@ -15,6 +15,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.JComponent;
@@ -32,6 +33,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
@@ -39,6 +41,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
+import com.cxsquared.nsmm.tools.EditListAction;
+import com.cxsquared.nsmm.tools.ListAction;
 import com.cxsquared.nsmm.tools.ListTransferHandler;
 import com.cxsquared.nsmm.tools.XmlFilter;
 import com.cxsquared.nsmm.tools.XmlParser;
@@ -296,15 +300,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		if (node == null) return;
 		if (node.isLeaf()) {
 			if (prevNode != null) {
-				for (JLabel columnName : listOfColumns.keySet()) {
-					if (listOfColumns.get(columnName).getClass().equals(JTextPane.class)) {
-						JTextPane columnText = (JTextPane) listOfColumns.get(columnName);
-						ModNode columnNode = xmlParser.modList.getChild(prevNode.getParent().getParent().toString()).getChild(prevNode.getParent().toString()).getChild(prevNode.toString()).getChild(columnName.getText());
-						if (!columnText.getText().equals(columnNode.getData())) {
-							columnNode.setData(columnText.getText());
-						}
-					}
-				}
+				detectChange();
 			}
 
 			tabbedPane.removeAll();
@@ -365,7 +361,7 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	}
 
 	private JComponent createItemPropsList(ModNode column) {
-		String[] itemStrings = { "" };
+		String[] itemStrings = {};
 		if (column.getData() != null) itemStrings = column.getData().split(",");
 		JSplitPane columnData = new JSplitPane();
 		DefaultListModel<String> itemList = new DefaultListModel<String>();
@@ -384,35 +380,36 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 	}
 
 	private JComponent createConditionsList(ModNode column) {
-		String[] conditionStrings = { "" };
+		String[] conditionStrings = {};
 		if (column.getData() != null) conditionStrings = column.getData().split(",");
 		JSplitPane tempPane = new JSplitPane();
-		JTextPane tempText = new JTextPane();
 		DefaultListModel<String> tempList = new DefaultListModel<String>();
 		int numberOfText = 0;
 		for (int i = 0; i < conditionStrings.length; i++) {
-			if (conditionStrings[i].length() > 0) {
+			if (conditionStrings[i].length() > 0 && !conditionStrings[i].equals("\n")) {
 				if (column.getParent().getParent().getName().equals("battlemoves")) {
 					if (column.getName().contains("PreConditions")) {
 						if (conditionStrings[i].startsWith("-")) {
-							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1).split("-")[1] + ")");
+							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1).replace(" ", "")) - 1).split("-")[1] + ")");
 						} else {
-							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i]) - 1).split("-")[1] + ")");
+							tempList.addElement(conditionStrings[i] + " (" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].replace(" ", "")) - 1).split("-")[1] + ")");
 						}
 					} else {
 						if (i < 3) {
 							if (conditionStrings[i].contains("-")) {
-								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " [-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(2)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
+								tempList.addElement(column.getData().split("]")[numberOfText] + "]" + " [-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(2)) - 1) + "," + conditionStrings[1] + ","
+										+ conditionStrings[2]);
 							} else {
-								tempText.setText(column.getData().split("]")[numberOfText] + "]" + " [" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(1)) - 1) + "," + conditionStrings[1] + "," + conditionStrings[2]);
+								tempList.addElement(column.getData().split("]")[numberOfText] + "]" + " [" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[0].substring(1)) - 1) + "," + conditionStrings[1] + ","
+										+ conditionStrings[2]);
 							}
 						} else {
 							if (conditionStrings[i].contains("-")) {
-								tempText.setText(tempText.getText() + "\n" + column.getData().split("]")[numberOfText].substring(1) + "]" + " [-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(2)) - 1) + ","
-										+ conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
+								tempList.addElement(column.getData().split("]")[numberOfText].substring(1) + "]" + " [-" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(2)) - 1) + "," + conditionStrings[i + 1] + ","
+										+ conditionStrings[i + 2]);
 							} else {
-								tempText.setText(tempText.getText() + "\n" + column.getData().split("]")[numberOfText].substring(1) + "]" + " [" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1) + ","
-										+ conditionStrings[i + 1] + "," + conditionStrings[i + 2]);
+								tempList.addElement(column.getData().split("]")[numberOfText].substring(1) + "]" + " [" + xmlParser.listOfConditions.get(Integer.parseInt(conditionStrings[i].substring(1)) - 1) + "," + conditionStrings[i + 1] + ","
+										+ conditionStrings[i + 2]);
 							}
 						}
 						numberOfText++;
@@ -445,19 +442,9 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 						}
 					}
 				}
-			} else {
-				tempList.addElement(conditionStrings[i]);
 			}
 		}
-		if (column.getParent().getName().equals(("battlemoves"))) {
-			if (column.getData().contains("PreConditions")) {
-				tempPane.setLeftComponent(createList(tempList, column.getName()));
-			} else {
-				tempPane.setLeftComponent(tempText);
-			}
-		} else {
-			tempPane.setLeftComponent(createList(tempList, column.getName()));
-		}
+		tempPane.setLeftComponent(createList(tempList, column.getName()));
 		tempPane.setRightComponent(new JScrollPane(createList(conditionsList, "conditionsList")));
 		return tempPane;
 	}
@@ -469,7 +456,62 @@ public class DataWindow extends JFrame implements TreeSelectionListener {
 		textList.setTransferHandler(new ListTransferHandler());
 		textList.setName(name);
 		textList.setDropMode(DropMode.INSERT);
+		if (!name.equals("conditionsList")) {
+			Action edit = new EditListAction();
+			@SuppressWarnings("unused")
+			ListAction la = new ListAction(textList, edit);
+		}
 		return textList;
+	}
+
+	private void detectChange() {
+		for (JLabel columnName : listOfColumns.keySet()) {
+			ModNode columnNode = xmlParser.modList.getChild(prevNode.getParent().getParent().toString()).getChild(prevNode.getParent().toString()).getChild(prevNode.toString()).getChild(columnName.getText());
+			if (listOfColumns.get(columnName).getClass().equals(JTextPane.class)) {
+				JTextPane columnText = (JTextPane) listOfColumns.get(columnName);
+				if (!columnText.getText().equals(columnNode.getData())) {
+					columnNode.setData(columnText.getText());
+				}
+			} else if (listOfColumns.get(columnName).getClass().equals(JSplitPane.class)) {
+				JSplitPane columnPane = (JSplitPane) listOfColumns.get(columnName);
+				@SuppressWarnings("unchecked")
+				JList<String> columnList = (JList<String>) columnPane.getLeftComponent();
+				ListModel<String> columnModel = columnList.getModel();
+				if (columnModel.getSize() == 0) {
+					columnNode.setData("");
+				} else if (columnNode.getData().equals("")) {
+					if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
+							|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
+					} else {
+						System.out.println("Gettin it");
+						for (int j = 0; j < columnModel.getSize(); j++) {
+							if (j == 0) {
+								columnNode.setData(columnModel.getElementAt(j).split("\\(")[0]);
+							} else {
+								columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("\\(")[0]);
+							}
+						}
+						return;
+					}
+				} else {
+					for (int i = 0; i < columnModel.getSize(); i++) {
+						if (columnName.getText().equals("vUsConditions") || columnName.getText().equals("vThemConditions") || columnName.getText().equals("vPairConditions") || columnName.getText().equals("vUsFailConditions")
+								|| columnName.getText().equals("vThemFailConditions") || columnName.getText().equals("vPairFailConditions")) {
+						} else if (!columnModel.getElementAt(i).split("\\(")[0].equals(columnNode.getData().split(",")[i])) {
+							System.out.println("not blank " + columnNode.getName()+ "data =" + columnNode.getData());
+							for (int j = 0; j < columnModel.getSize(); j++) {
+								if (j == 0) {
+									columnNode.setData(columnModel.getElementAt(j).split("\\(")[0]);
+								} else {
+									columnNode.setData(columnNode.getData() + "," + columnModel.getElementAt(j).split("\\(")[0]);
+								}
+							}
+							return;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private void refreshData() {
