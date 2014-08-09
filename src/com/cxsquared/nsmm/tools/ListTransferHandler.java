@@ -99,6 +99,18 @@ public class ListTransferHandler extends TransferHandler {
 						dataText = "[" + dataText.split("-")[0] + ",0,0] [" + dataText + ",0,0]";
 					} else if (list.getName().equals("vUsPreConditions") || list.getName().equals("vThemPreConditions")) {
 						dataText = dataText.split("-")[0] + " (" + dataText.split("-")[1] + ")";
+					} else if (list.getName().equals("vBaseConditions")) {
+						dataText = dataText.split("-")[0] + "=1 (" + dataText.split("-")[1] + ")";
+					} else if (list.getName().equals("aPossessConditions") || list.getName().equals("aUseConditions")) {
+						dataText = "=" + dataText.split("-")[0] + " (" + dataText.split("-")[1] + ")";
+					} else if (list.getName().equals("aEquipConditions")) {
+						dataText = "0=" + dataText.split("-")[0] + " (" + dataText.split("-")[1] + ")";
+					} else if (list.getName().contains("Conditions")) {
+						if (dataText.equals("1-")) {
+							dataText = dataText.split("-")[0] + " ()";
+						} else {
+							dataText = dataText.split("-")[0] + " (" + dataText.split("-")[1] + ")";
+						}
 					}
 					if (insert) {
 						listModel.add(index++, dataText);
