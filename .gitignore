@@ -31,3 +31,8 @@ local.properties
 # generated files
 bin/
 gen/
+
+# Idea Stuff
+.idea/
+out/
+NeoScavengerModManager.iml
